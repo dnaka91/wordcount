@@ -82,10 +82,6 @@ impl DFA {
         dfa
     }
 
-    const fn alphabet_len(&self) -> usize {
-        ALPHABET_LEN
-    }
-
     fn is_match_state(&self, id: usize) -> bool {
         id <= self.max_match && id > DEAD_ID
     }
@@ -95,21 +91,21 @@ impl DFA {
     }
 
     fn next_state(&self, from: usize, byte: u8) -> usize {
-        let alphabet_len = self.alphabet_len();
+        let alphabet_len = ALPHABET_LEN;
         self.trans[from * alphabet_len + byte as usize]
     }
 
     fn set_next_state(&mut self, from: usize, byte: u8, to: usize) {
-        let alphabet_len = self.alphabet_len();
+        let alphabet_len = ALPHABET_LEN;
         self.trans[from * alphabet_len + byte as usize] = to;
     }
 
     fn swap_states(&mut self, id1: usize, id2: usize) {
         assert!(!self.premultiplied, "can't swap states in premultiplied DFA");
 
-        let o1 = id1 * self.alphabet_len();
-        let o2 = id2 * self.alphabet_len();
-        for b in 0..self.alphabet_len() {
+        let o1 = id1 * ALPHABET_LEN;
+        let o2 = id2 * ALPHABET_LEN;
+        for b in 0..ALPHABET_LEN {
             self.trans.swap(o1 + b, o2 + b);
         }
         self.matches.swap(id1, id2);
@@ -143,7 +139,7 @@ impl DFA {
             cur -= 1;
         }
         for id in 0..self.state_count {
-            let alphabet_len = self.alphabet_len();
+            let alphabet_len = ALPHABET_LEN;
             let offset = id * alphabet_len;
             for next in &mut self.trans[offset..offset + alphabet_len] {
                 if swaps[*next] != FAIL_ID {
@@ -162,20 +158,18 @@ impl DFA {
             return;
         }
 
-        let alpha_len = self.alphabet_len();
-
         for id in 2..self.state_count {
-            let offset = id * alpha_len;
-            for next in &mut self.trans[offset..offset + alpha_len] {
+            let offset = id * ALPHABET_LEN;
+            for next in &mut self.trans[offset..offset + ALPHABET_LEN] {
                 if *next == DEAD_ID {
                     continue;
                 }
-                *next *= alpha_len;
+                *next *= ALPHABET_LEN;
             }
         }
         self.premultiplied = true;
-        self.start_id *= alpha_len;
-        self.max_match *= alpha_len;
+        self.start_id *= ALPHABET_LEN;
+        self.max_match *= ALPHABET_LEN;
     }
 }
 

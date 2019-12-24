@@ -26,7 +26,7 @@ where
     // threads to improve throughput.
     chunked_lines(article, LINE_LIMIT).par_bridge().map(Result::unwrap).for_each(|line| {
         for mat in ac.find_overlapping_iter(&line) {
-            words.get_index(mat.pattern()).unwrap().1.fetch_add(1, Ordering::SeqCst);
+            words.get_index(mat.pattern()).unwrap().1.fetch_add(1, Ordering::Relaxed);
         }
     });
 }

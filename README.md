@@ -5,8 +5,8 @@
 - [Run](#run)
   - [Run with Docker](#run-with-docker)
 - [Used libraries](#used-libraries)
-  - [getopts](#getopts)
   - [indexmap](#indexmap)
+  - [jemallocator](#jemallocator)
   - [rayon](#rayon)
 - [License](#license)
 
@@ -66,14 +66,14 @@ This is a list of all used external dependencies with a short explanation what e
 
 ![Dependency graph](docs/graph.svg)
 
-### getopts
-
-A parser for CLI options. This allows easy management of all the supported options of the program.
-
 ### indexmap
 
 Indexmap is a **map** that acts the same way as a `HashMap` but preserves insertion order and allows
 accessing elements by key as well as by index.
+
+### jemallocator
+
+An alternative memory allocator that is faster than the system default.
 
 ### rayon
 

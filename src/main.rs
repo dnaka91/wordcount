@@ -50,56 +50,33 @@ use std::fs;
 use std::io::BufReader;
 use std::sync::atomic::AtomicU64;
 
-use getopts::Options;
 use indexmap::map::IndexMap;
 
 mod aho_corasick;
 mod ahocorasick;
-mod fourtytwo;
-mod naive;
 
-const OPT_NAIVE: &str = "naive";
-const OPT_FOURTYTWO: &str = "fourtytwo";
-const OPT_HELP: &str = "help";
-const OPT_VERSION: &str = "version";
+#[global_allocator]
+static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    // First parsing CLI input.
-    let mut opts = Options::new();
-    opts.optflag("n", OPT_NAIVE, "Use a naive custom implementation");
-    opts.optflag("f", OPT_FOURTYTWO, "Use the fastest algorithm in the world");
-    opts.optflag("h", OPT_HELP, "Print this help menu");
-    opts.optflag("v", OPT_VERSION, "Show the program version");
+    let matches: Vec<_> = env::args().skip(1).collect();
 
-    let matches = opts.parse(env::args().skip(1))?;
-
-    if matches.opt_present(OPT_VERSION) {
-        print_version();
-        return Ok(());
-    }
-
-    if matches.opt_present(OPT_HELP) || matches.free.len() != 2 {
-        print_usage(&opts);
+    if matches.len() != 2 {
+        print_usage();
         return Ok(());
     }
 
     // Then we need to open our input files for processing.
-    let words = String::from_utf8(fs::read(&matches.free[0])?)?;
+    let words = String::from_utf8(fs::read(&matches[0])?)?;
     let words: Vec<_> = words.split_terminator('\n').collect();
     let words_map: IndexMap<_, _> = words.iter().map(|s| (*s, AtomicU64::default())).collect();
 
-    let article = fs::File::open(&matches.free[1])?;
+    let article = fs::File::open(&matches[1])?;
     let article = BufReader::new(article);
 
     // Here is the core logic for counting words. Everything else is just preparation
     // like parsing CLI options, opening the files and so on.
-    if matches.opt_present(OPT_NAIVE) {
-        naive::process(&words_map, article);
-    } else if matches.opt_present(OPT_FOURTYTWO) {
-        fourtytwo::process(&words_map, article);
-    } else {
-        ahocorasick::process(&words_map, article);
-    }
+    ahocorasick::process(&words_map, article);
 
     // Printing out our findings.
     for w in words {
@@ -110,12 +87,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 /// Print out instructions about how to use this program.
-fn print_usage(opts: &Options) {
-    let brief = format!("Usage: {} WORDS_FILE ARTICLE_FILE [options]", env!("CARGO_PKG_NAME"));
-    print!("{}", opts.usage(&brief));
-}
-
-/// Print out the program's version number.
-fn print_version() {
-    println!("{} v{}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+fn print_usage() {
+    let brief = format!("Usage: {} WORDS_FILE ARTICLE_FILE", env!("CARGO_PKG_NAME"));
+    print!("{}", brief);
 }

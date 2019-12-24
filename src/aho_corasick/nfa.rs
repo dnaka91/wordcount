@@ -1,4 +1,4 @@
-use std::collections::{BTreeSet, VecDeque};
+use std::collections::VecDeque;
 use std::ops::{Index, IndexMut};
 
 use super::state_id::{DEAD_ID, FAIL_ID};
@@ -240,7 +240,7 @@ struct Compiler {
 
 impl Compiler {
     fn new() -> Self {
-        Self { nfa: NFA { states: vec![] } }
+        Self { nfa: NFA { states: Vec::with_capacity(3200) } }
     }
 
     fn compile<I, P>(mut self, patterns: I) -> NFA
@@ -286,22 +286,17 @@ impl Compiler {
     }
 
     fn fill_failure_transitions_standard(&mut self) {
-        let mut queue = VecDeque::new();
-        let mut seen = self.queued_set();
+        let mut queue = VecDeque::with_capacity(720);
         for b in 0..=255 {
             let next = self.nfa.start().next_state(b);
-            if next != START_ID && !seen.contains(next) {
+            if next != START_ID {
                 queue.push_back(next);
-                seen.insert(next);
             }
         }
         while let Some(id) = queue.pop_front() {
             let mut it = self.nfa.iter_transitions_mut(id);
             while let Some((b, next)) = it.next() {
-                if !seen.contains(next) {
-                    queue.push_back(next);
-                    seen.insert(next);
-                }
+                queue.push_back(next);
 
                 let mut fail = it.nfa().state(id).fail;
                 while it.nfa().state(fail).next_state(b) == FAIL_ID {
@@ -314,10 +309,6 @@ impl Compiler {
 
             it.nfa().copy_empty_matches(id);
         }
-    }
-
-    const fn queued_set(&self) -> QueuedSet {
-        QueuedSet::inert()
     }
 
     fn add_start_state_loop(&mut self) {
@@ -341,30 +332,6 @@ impl Compiler {
             self.nfa.add_dense_state(depth)
         } else {
             self.nfa.add_sparse_state(depth)
-        }
-    }
-}
-
-#[derive(Debug)]
-struct QueuedSet {
-    set: Option<BTreeSet<usize>>,
-}
-
-impl QueuedSet {
-    const fn inert() -> Self {
-        Self { set: None }
-    }
-
-    fn insert(&mut self, state_id: usize) {
-        if let Some(ref mut set) = self.set {
-            set.insert(state_id);
-        }
-    }
-
-    fn contains(&self, state_id: usize) -> bool {
-        match self.set {
-            None => false,
-            Some(ref set) => set.contains(&state_id),
         }
     }
 }
