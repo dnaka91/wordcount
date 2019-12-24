@@ -1,0 +1,10 @@
+version: "2.4"
+services:
+  app:
+    build:
+      context: ./
+      dockerfile: Dockerfile.challenge
+    working_dir: /app/
+    tty: true
+    mem_limit: 128m
+    cpu_count: 2
