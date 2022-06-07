@@ -42,7 +42,7 @@
 //!
 
 #![forbid(unsafe_code)]
-#![deny(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
+#![deny(rust_2018_idioms, clippy::all, clippy::pedantic, clippy::cargo)]
 
 use std::env;
 use std::error::Error;

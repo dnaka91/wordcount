@@ -1,11 +1,11 @@
 use super::automaton::Automaton;
-use super::dfa::{self, DFA};
+use super::dfa::{self, Dfa};
 use super::nfa;
 use super::Match;
 
 #[derive(Clone)]
 pub struct AhoCorasick {
-    imp: DFA,
+    imp: Dfa,
 }
 
 impl AhoCorasick {
@@ -14,8 +14,8 @@ impl AhoCorasick {
         I: IntoIterator<Item = P>,
         P: AsRef<[u8]>,
     {
-        let nfa = nfa::NFA::new(patterns);
-        let dfa = dfa::DFA::new(&nfa);
+        let nfa = nfa::Nfa::new(patterns);
+        let dfa = dfa::Dfa::new(&nfa);
 
         Self { imp: dfa }
     }
@@ -29,7 +29,7 @@ impl AhoCorasick {
 }
 
 pub struct FindIter<'a, 'b> {
-    fsm: &'a DFA,
+    fsm: &'a Dfa,
     haystack: &'b [u8],
     pos: usize,
     state_id: usize,

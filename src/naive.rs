@@ -7,7 +7,7 @@ use indexmap::map::IndexMap;
 use rayon::prelude::*;
 
 #[allow(dead_code, unused_variables)]
-pub(crate) fn process<R>(words: &IndexMap<&str, AtomicU64>, article: BufReader<R>)
+pub fn process<R>(words: &IndexMap<&str, AtomicU64>, article: BufReader<R>)
 where
     R: Read + Send,
 {

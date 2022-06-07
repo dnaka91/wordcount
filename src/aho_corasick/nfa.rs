@@ -6,11 +6,11 @@ use super::state_id::{DEAD_ID, FAIL_ID};
 pub const START_ID: usize = 2;
 
 #[derive(Clone)]
-pub struct NFA {
+pub struct Nfa {
     states: Vec<State>,
 }
 
-impl NFA {
+impl Nfa {
     pub fn new<I, P>(patterns: I) -> Self
     where
         I: IntoIterator<Item = P>,
@@ -55,7 +55,7 @@ impl NFA {
         self.state_mut(START_ID)
     }
 
-    fn iter_transitions_mut(&mut self, id: usize) -> IterTransitionsMut {
+    fn iter_transitions_mut(&mut self, id: usize) -> IterTransitionsMut<'_> {
         IterTransitionsMut::new(self, id)
     }
 
@@ -68,17 +68,17 @@ impl NFA {
         self.copy_matches(START_ID, dst);
     }
 
-    fn add_dense_state(&mut self, depth: usize) -> usize {
+    fn add_dense_state(&mut self) -> usize {
         let trans = Transitions::Dense(Dense::new());
         let id = self.states.len();
-        self.states.push(State { trans, fail: START_ID, depth, matches: vec![] });
+        self.states.push(State { trans, fail: START_ID, matches: vec![] });
         id
     }
 
-    fn add_sparse_state(&mut self, depth: usize) -> usize {
+    fn add_sparse_state(&mut self) -> usize {
         let trans = Transitions::Sparse(vec![]);
         let id = self.states.len();
-        self.states.push(State { trans, fail: START_ID, depth, matches: vec![] });
+        self.states.push(State { trans, fail: START_ID, matches: vec![] });
         id
     }
 }
@@ -88,7 +88,6 @@ pub struct State {
     trans: Transitions,
     fail: usize,
     matches: Vec<(usize, usize)>,
-    depth: usize,
 }
 
 impl State {
@@ -189,17 +188,17 @@ impl Transitions {
 }
 
 struct IterTransitionsMut<'a> {
-    nfa: &'a mut NFA,
+    nfa: &'a mut Nfa,
     state_id: usize,
     cur: usize,
 }
 
 impl<'a> IterTransitionsMut<'a> {
-    fn new(nfa: &'a mut NFA, state_id: usize) -> IterTransitionsMut<'a> {
+    fn new(nfa: &'a mut Nfa, state_id: usize) -> IterTransitionsMut<'a> {
         IterTransitionsMut { nfa, state_id, cur: 0 }
     }
 
-    fn nfa(&mut self) -> &mut NFA {
+    fn nfa(&mut self) -> &mut Nfa {
         self.nfa
     }
 }
@@ -235,15 +234,15 @@ impl<'a> Iterator for IterTransitionsMut<'a> {
 }
 
 struct Compiler {
-    nfa: NFA,
+    nfa: Nfa,
 }
 
 impl Compiler {
-    fn new() -> Self {
-        Self { nfa: NFA { states: vec![] } }
+    const fn new() -> Self {
+        Self { nfa: Nfa { states: vec![] } }
     }
 
-    fn compile<I, P>(mut self, patterns: I) -> NFA
+    fn compile<I, P>(mut self, patterns: I) -> Nfa
     where
         I: IntoIterator<Item = P>,
         P: AsRef<[u8]>,
@@ -287,7 +286,7 @@ impl Compiler {
 
     fn fill_failure_transitions_standard(&mut self) {
         let mut queue = VecDeque::new();
-        let mut seen = self.queued_set();
+        let mut seen = QueuedSet::inert();
         for b in 0..=255 {
             let next = self.nfa.start().next_state(b);
             if next != START_ID && !seen.contains(next) {
@@ -316,10 +315,6 @@ impl Compiler {
         }
     }
 
-    const fn queued_set(&self) -> QueuedSet {
-        QueuedSet::inert()
-    }
-
     fn add_start_state_loop(&mut self) {
         let start = self.nfa.start_mut();
         for b in 0..=255 {
@@ -338,9 +333,9 @@ impl Compiler {
 
     fn add_state(&mut self, depth: usize) -> usize {
         if depth < 2 {
-            self.nfa.add_dense_state(depth)
+            self.nfa.add_dense_state()
         } else {
-            self.nfa.add_sparse_state(depth)
+            self.nfa.add_sparse_state()
         }
     }
 }

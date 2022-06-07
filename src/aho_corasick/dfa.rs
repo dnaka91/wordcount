@@ -1,12 +1,12 @@
 use super::automaton::Automaton;
-use super::nfa::{NFA, START_ID};
+use super::nfa::{Nfa, START_ID};
 use super::state_id::{DEAD_ID, FAIL_ID};
 use super::Match;
 
 pub const ALPHABET_LEN: usize = 256;
 
 #[derive(Clone)]
-pub struct DFA {
+pub struct Dfa {
     premultiplied: bool,
     start_id: usize,
     state_count: usize,
@@ -15,7 +15,7 @@ pub struct DFA {
     matches: Vec<Vec<(usize, usize)>>,
 }
 
-impl Automaton for DFA {
+impl Automaton for Dfa {
     fn start_state(&self) -> usize {
         self.start_id
     }
@@ -54,8 +54,8 @@ impl Automaton for DFA {
     }
 }
 
-impl DFA {
-    pub fn new(nfa: &NFA) -> Self {
+impl Dfa {
+    pub fn new(nfa: &Nfa) -> Self {
         let trans = vec![FAIL_ID; ALPHABET_LEN * nfa.state_len()];
         let matches = vec![vec![]; nfa.state_len()];
         let mut dfa = Self {
@@ -82,11 +82,7 @@ impl DFA {
         dfa
     }
 
-    const fn alphabet_len(&self) -> usize {
-        ALPHABET_LEN
-    }
-
-    fn is_match_state(&self, id: usize) -> bool {
+    const fn is_match_state(&self, id: usize) -> bool {
         id <= self.max_match && id > DEAD_ID
     }
 
@@ -95,21 +91,19 @@ impl DFA {
     }
 
     fn next_state(&self, from: usize, byte: u8) -> usize {
-        let alphabet_len = self.alphabet_len();
-        self.trans[from * alphabet_len + byte as usize]
+        self.trans[from * ALPHABET_LEN + byte as usize]
     }
 
     fn set_next_state(&mut self, from: usize, byte: u8, to: usize) {
-        let alphabet_len = self.alphabet_len();
-        self.trans[from * alphabet_len + byte as usize] = to;
+        self.trans[from * ALPHABET_LEN + byte as usize] = to;
     }
 
     fn swap_states(&mut self, id1: usize, id2: usize) {
         assert!(!self.premultiplied, "can't swap states in premultiplied DFA");
 
-        let o1 = id1 * self.alphabet_len();
-        let o2 = id2 * self.alphabet_len();
-        for b in 0..self.alphabet_len() {
+        let o1 = id1 * ALPHABET_LEN;
+        let o2 = id2 * ALPHABET_LEN;
+        for b in 0..ALPHABET_LEN {
             self.trans.swap(o1 + b, o2 + b);
         }
         self.matches.swap(id1, id2);
@@ -143,9 +137,8 @@ impl DFA {
             cur -= 1;
         }
         for id in 0..self.state_count {
-            let alphabet_len = self.alphabet_len();
-            let offset = id * alphabet_len;
-            for next in &mut self.trans[offset..offset + alphabet_len] {
+            let offset = id * ALPHABET_LEN;
+            for next in &mut self.trans[offset..offset + ALPHABET_LEN] {
                 if swaps[*next] != FAIL_ID {
                     *next = swaps[*next];
                 }
@@ -162,26 +155,24 @@ impl DFA {
             return;
         }
 
-        let alpha_len = self.alphabet_len();
-
         for id in 2..self.state_count {
-            let offset = id * alpha_len;
-            for next in &mut self.trans[offset..offset + alpha_len] {
+            let offset = id * ALPHABET_LEN;
+            for next in &mut self.trans[offset..offset + ALPHABET_LEN] {
                 if *next == DEAD_ID {
                     continue;
                 }
-                *next *= alpha_len;
+                *next *= ALPHABET_LEN;
             }
         }
         self.premultiplied = true;
-        self.start_id *= alpha_len;
-        self.max_match *= alpha_len;
+        self.start_id *= ALPHABET_LEN;
+        self.max_match *= ALPHABET_LEN;
     }
 }
 
 fn nfa_next_state_memoized(
-    nfa: &NFA,
-    dfa: &DFA,
+    nfa: &Nfa,
+    dfa: &Dfa,
     populating: usize,
     mut current: usize,
     input: u8,

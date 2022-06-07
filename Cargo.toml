@@ -2,7 +2,7 @@
 name = "wordcount"
 version = "1.0.0"
 authors = ["Dominik Nakamura <dnaka91@gmail.com>"]
-edition = "2018"
+edition = "2021"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 description = "Solution for the Wordcount Coding Challenge 2019"
@@ -14,8 +14,8 @@ exclude = ["docs/**"]
 
 [dependencies]
 getopts = "0.2.21"
-indexmap = "1.3.0"
-rayon = "1.2.0"
+indexmap = "1.8.2"
+rayon = "1.5.3"
 
 [profile.release]
 lto = true

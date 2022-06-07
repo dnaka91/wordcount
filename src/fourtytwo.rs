@@ -8,7 +8,7 @@ use indexmap::map::IndexMap;
 /// Answer to the Ultimate Question of Life, the Universe, and Everything.
 const THE_ANSWER_TO_EVERYTHING: u64 = 42;
 
-pub(crate) fn process<R>(words: &IndexMap<&str, AtomicU64>, article: BufReader<R>)
+pub fn process<R>(words: &IndexMap<&str, AtomicU64>, article: BufReader<R>)
 where
     R: Read + Send,
 {

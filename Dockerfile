@@ -1,4 +1,4 @@
-FROM rust:1.39 as builder
+FROM rust:1.58-bullseye as builder
 
 RUN cargo install hyperfine
 
@@ -12,7 +12,7 @@ RUN cargo install --path .
 
 
 
-FROM debian:buster
+FROM debian:bullseye
 
 WORKDIR /app
 

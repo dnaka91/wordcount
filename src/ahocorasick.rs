@@ -13,7 +13,7 @@ use rayon::prelude::*;
 /// the input given during the challenge.
 const LINE_LIMIT: u64 = 10000;
 
-pub(crate) fn process<R>(words: &IndexMap<&str, AtomicU64>, article: BufReader<R>)
+pub fn process<R>(words: &IndexMap<&str, AtomicU64>, article: BufReader<R>)
 where
     R: Read + Send,
 {
@@ -43,7 +43,7 @@ struct ChunkedLines<B> {
 /// Also,  in contrast to [`lines`] each string returned *will contain* the newline bytes and CRLFs.
 ///
 /// [`lines`]: https://doc.rust-lang.org/std/io/trait.BufRead.html#method.lines
-fn chunked_lines<R>(buf: R, limit: u64) -> ChunkedLines<R>
+const fn chunked_lines<R>(buf: R, limit: u64) -> ChunkedLines<R>
 where
     R: BufRead + Sized,
 {
